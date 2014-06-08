@@ -1,0 +1,6 @@
+build/
+libsoplex.a
+gurobi.log
+soplex.cpp
+soplex.so
+soplex.egg-info/
