@@ -1,6 +1,11 @@
 # cython: embedsignature=True
 
 from cython.operator cimport dereference as deref
+try:
+    from sympy import Basic
+except:
+    class Basic:
+        pass
 
 
 cdef class Soplex:
@@ -39,6 +44,8 @@ cdef class Soplex:
         for reaction in cobra_model.reactions:
             vector = DSVector()
             for metabolite, stoichiometry in reaction._metabolites.items():
+                if isinstance(stoichiometry, Basic):
+                    continue
                 vector.add(cobra_model.metabolites.index(metabolite.id), stoichiometry)
             col = LPCol(reaction.objective_coefficient, vector,
                             reaction.upper_bound, reaction.lower_bound)
