@@ -1,5 +1,6 @@
 build/
 libsoplex.a
+libgmp.a
 gurobi.log
 soplex.cpp
 soplex.so
