@@ -1,12 +1,14 @@
 # cython: embedsignature=True
 
 from cython.operator cimport dereference as deref
+
 try:
     from sympy import Basic
 except:
     class Basic:
         pass
 
+include "soplex_constants.pxi"
 
 cdef class Soplex:
     cdef SoPlex *soplex
@@ -50,8 +52,11 @@ cdef class Soplex:
             col = LPCol(reaction.objective_coefficient, vector,
                             reaction.upper_bound, reaction.lower_bound)
             self.soplex.addColReal(col)
-        # TEMP: TODO REMOVE
+        # TEMP: TODO REMOVE AND HANDLE PARAMTERS FOR REAL
         self.soplex.setIntParam(VERBOSITY, 0)
+        self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_RATIONAL)
+        self.soplex.setRealParam(FPFEASTOL, 1e-20)
+        self.soplex.setRealParam(FPOPTTOL, 1e-20)
         
         
     def create_problem(cls, cobra_model, objective_sense="maximize"):
@@ -78,11 +83,59 @@ cdef class Soplex:
         self.soplex.changeElementReal(met_index, rxn_index, value)
 
     cpdef set_parameter(self, parameter_name, value):
-        raise NotImplementedError("todo")
+        name_upper = parameter_name.upper()
+        if parameter_name == "verbose" or name_upper == "VERBOSITY":
+            if value is True:
+                self.soplex.setIntParam(VERBOSITY, 5)
+            else:
+                self.soplex.setIntParam(VERBOSITY, value)
+        elif name_upper == "SOLVEMODE":
+            self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_VALUES[value.upper()]) 
+        elif name_upper == "CHECKMODE":
+            self.soplex.setIntParam(CHECKMODE, CHECKMODE_VALUES[value.upper()]) 
+        elif parameter_name in IntParameters:
+            raise NotImplementedError("todo implement " + parameter_name)
+        # setRealParam section
+        elif name_upper == "FEASTOL" or parameter_name == "tolerance_feasibility":
+            self.soplex.setRealParam(FEASTOL, value)
+        elif name_upper == "OPTTOL":
+            self.soplex.setRealParam(OPTTOL, value)
+        elif name_upper == "EPSILON_ZERO":
+            self.soplex.setRealParam(EPSILON_ZERO, value)
+        elif name_upper == "EPSILON_FACTORIZATION":
+            self.soplex.setRealParam(EPSILON_FACTORIZATION, value)
+        elif name_upper == "EPSILON_UPDATE":
+            self.soplex.setRealParam(EPSILON_UPDATE, value)
+        elif name_upper == "EPSILON_PIVOT":
+            self.soplex.setRealParam(EPSILON_PIVOT, value)
+        elif name_upper == "INFTY":
+            self.soplex.setRealParam(INFTY, value)
+        elif name_upper == "TIMELIMIT" or parameter_name == "time_limit":
+            self.soplex.setRealParam(TIMELIMIT, value)
+        elif name_upper == "OBJLIMIT_LOWER":
+            self.soplex.setRealParam(OBJLIMIT_LOWER, value)
+        elif name_upper == "OBJLIMIT_UPPER":
+            self.soplex.setRealParam(OBJLIMIT_UPPER, value)
+        elif name_upper == "FPFEASTOL":
+            self.soplex.setRealParam(FPFEASTOL, value)
+        elif name_upper == "FPOPTTOL":
+            self.soplex.setRealParam(FPOPTTOL, value)
+        elif name_upper == "MAXSCALEINCR":
+            self.soplex.setRealParam(MAXSCALEINCR, value)
+        elif name_upper == "LIFTMINVAL":
+            self.soplex.setRealParam(LIFTMINVAL, value)
+        elif name_upper == "LIFTMAXVAL":
+            self.soplex.setRealParam(LIFTMAXVAL, value)
+        elif name_upper == "SPARSITY_THRESHOLD":
+            self.soplex.setRealParam(SPARSITY_THRESHOLD, value)
+        else:
+            raise ValueError("Unknown parameter '%s'" % parameter_name)
 
     def solve_problem(self, **kwargs):
         if "objective_sense" in kwargs:
-            self.set_objective_sense(kwargs["objective_sense"])
+            self.set_objective_sense(kwargs.pop("objective_sense"))
+        for key, value in kwargs.items():
+            self.set_parameter(key, value)
         self.soplex.solve()
         return self.get_status()
 
@@ -126,6 +179,9 @@ cdef class Soplex:
     
     def solve(cls, cobra_model, **kwargs):
         problem = cls.create_problem(cobra_model)
+        problem.solve_problem(objective_sense="maximize")
+        problem.solve_problem(objective_sense="minimize")
+        problem.solve_problem(objective_sense="maximize")
         problem.solve_problem(**kwargs)
         solution = problem.format_solution(cobra_model)
         return solution

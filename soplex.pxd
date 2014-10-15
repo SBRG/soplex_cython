@@ -108,6 +108,20 @@ cdef extern from "soplex.h" namespace "soplex":
         ERROR "soplex::SPxSolver::ERROR"
 
     enum:
+        SYNCMODE_ONLYREAL "soplex::SoPlex::SYNCMODE_ONLYREAL"
+        SYNCMODE_AUTO "soplex::SoPlex::SYNCMODE_AUTO"
+        SYNCMODE_MANUAL "soplex::SoPlex::SYNCMODE_MANUAL"
+
+    enum:
+        READMODE_REAL "soplex::SoPlex::READMODE_REAL"
+        READMODE_RATIONAL "soplex::SoPlex::READMODE_RATIONAL"
+
+    enum:
         SOLVEMODE_REAL "soplex::SoPlex::SOLVEMODE_REAL"
         SOLVEMODE_AUTO "soplex::SoPlex::SOLVEMODE_AUTO"
         SOLVEMODE_RATIONAL "soplex::SoPlex::SOLVEMODE_RATIONAL"
+
+    enum:
+        CHECKMODE_REAL "soplex::SoPlex::CHECKMODE_REAL"
+        CHECKMODE_AUTO "soplex::SoPlex::CHECKMODE_AUTO"
+        CHECKMODE_RATIONAL "soplex::SoPlex::CHECKMODE_RATIONAL"
