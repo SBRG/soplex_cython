@@ -12,7 +12,7 @@ First build soplex using the following steps:
  - Remove -Wconversion from the GCCWARN section
  - Add -DWITH_LONG_DOUBLE to the CPPFLAGS section
  - mac: add ```-I/usr/local/include``` to the CPPFLAGS section
-3. Compile soplex using ```make SHARED=true ZLIB=false VERBOSE=true```
+3. Compile soplex using ```make SHARED=true GMP=true ZLIB=false VERBOSE=true```
  - This may fail to link, which is fine.
 4. Compile a library for static linking (libsoplex.a)
  - On a mac first run ```rm obj/*/lib/gzstream.o``` 

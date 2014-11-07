@@ -1,20 +1,34 @@
 from libcpp cimport bool
+from libcpp.string cimport string
 
 cdef extern from "soplex.h" namespace "soplex":
     ctypedef long double Real
     cdef Real infinity
 
+    cdef cppclass Rational:
+        Rational() except +
+        Rational(int) except +
+        Rational operator+ (Rational)
+        Rational operator/ (Rational)
+        double operatordouble ()
+        int precision()
+        bool readString(char *)
+        
+        
+
     cdef cppclass SoPlex:
         SoPlex() except +
+        int solve()
+        int status()
+        bool setIntParam(IntParam, int)
+        bool setRealParam(RealParam, Real)
+        
+        # Real functions
         int numRowsReal()
         int numColsReal ()
         int numNonzerosReal ()
-        bool setIntParam(IntParam, int)
-        bool setRealParam(RealParam, Real)
         void addColReal(LPCol)
         void addRowReal(LPRow)
-        int solve()
-        int status()
         Real objValueReal()
         void getPrimalReal(DVector)
         void getDualReal(DVector)
@@ -22,6 +36,15 @@ cdef extern from "soplex.h" namespace "soplex":
         void changeUpperReal(int, Real)
         void changeObjReal(int, Real)
         void changeElementReal(int, int, Real)
+        
+        # Rational functions
+        void addColRational(LPCol)
+        void addRowRational(LPRow)
+        
+        void changeLowerRational(int, Rational)
+        void changeUpperRational(int, Rational)
+        void changeObjRational(int, Rational)
+        void changeElementRational(int, int, Rational)
 
     cdef cppclass LPCol:
         LPCol(Real, DSVector, Real, Real)  except +
@@ -34,6 +57,7 @@ cdef extern from "soplex.h" namespace "soplex":
     cdef cppclass LPRow:
         LPRow(Real, DSVector, Real) except +
         LPRow(DSVector, RowType, Real) except +
+        LPRow(DSVector, RowType, Rational) except +
         LPRow() except +
     
     enum RowType "soplex::LPRow::Type":
