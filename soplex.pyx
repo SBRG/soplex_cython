@@ -3,7 +3,7 @@
 from cython.operator cimport dereference as deref
 
 try:
-    from sympy import Basic
+    from sympy import Basic, Number
 except:
     class Basic:
         pass
@@ -46,11 +46,12 @@ cdef class Soplex:
         for reaction in cobra_model.reactions:
             vector = DSVector()
             for metabolite, stoichiometry in reaction._metabolites.items():
-                if isinstance(stoichiometry, Basic):
+                if isinstance(stoichiometry, Basic) and not isinstance(stoichiometry, Number):
                     continue
-                vector.add(cobra_model.metabolites.index(metabolite.id), stoichiometry)
-            col = LPCol(reaction.objective_coefficient, vector,
-                            reaction.upper_bound, reaction.lower_bound)
+                vector.add(cobra_model.metabolites.index(metabolite.id), float(stoichiometry))
+            col = LPCol(float(reaction.objective_coefficient), vector,
+                        float(reaction.upper_bound),
+                        float(reaction.lower_bound))
             self.soplex.addColReal(col)
         # TEMP: TODO REMOVE AND HANDLE PARAMTERS FOR REAL
         self.soplex.setIntParam(VERBOSITY, 0)
