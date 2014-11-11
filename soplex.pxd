@@ -11,8 +11,15 @@ cdef extern from "soplex.h" namespace "soplex":
         Rational(int) except +
         Rational(double) except +
         Rational operator+ (Rational)
+        Rational operator+ (Real)
+        Rational operator- (Rational)
+        Rational operator- (Real)
+        Rational operator* (Rational)
+        Rational operator* (Real)
         Rational operator/ (Rational)
-        double operatordouble ()
+        Rational operator/ (Real)
+        double operator"double" ()
+        long double operator"long double" ()
         int precision()
         bool readString(char *)
     cdef string rationalToString(Rational)
