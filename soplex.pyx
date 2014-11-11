@@ -1,19 +1,43 @@
 # cython: embedsignature=True
 
-from cython.operator cimport dereference as deref
+from decimal import Decimal
 
 try:
     from sympy import Basic, Number
 except:
     class Basic:
         pass
+    Number = Basic
 
 include "soplex_constants.pxi"
 
+
+cdef Rational rationalize(number):
+    cdef Rational r
+    if isinstance(number, (int, Number, Decimal)):
+        r = Rational()
+        r.readString(str(number))
+        return r
+    elif isinstance(number, Basic):
+        # TODO handle better
+        return Rational(0)
+    else:
+        return Rational(float(number))
+
+
 cdef class Soplex:
+    """cobra SoPlex solver object"""
     cdef SoPlex *soplex
+
     def __cinit__(self):
         self.soplex = new SoPlex()
+        # should sync automatically between Real and Rational
+        self.soplex.setIntParam(SYNCMODE, SYNCMODE_AUTO)
+        # set default solving parameters
+        self.soplex.setIntParam(VERBOSITY, 0)
+        self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_RATIONAL)
+        self.soplex.setRealParam(FPFEASTOL, 1e-20)
+        self.soplex.setRealParam(FPOPTTOL, 1e-20)
 
     def __dealloc__(self):
         del self.soplex
@@ -21,50 +45,49 @@ cdef class Soplex:
     def __init__(self, cobra_model=None):
         if cobra_model is None:
             return
-        cdef DSVector vector
-        cdef LPCol col
-        cdef LPRow row
-        cdef Real bound
-        # set the vector to be empty for now
-        vector = DSVector(0)
-        for metabolite in cobra_model.metabolites:
-            bound = metabolite._bound
+        cdef DSVectorRational vector
+        cdef LPColRational col
+        cdef Rational bound
+        cdef int i
+        cdef DSVectorReal r_vector = DSVectorReal(0)
+        # To get around lack of infinity in Rational, create bounds with Real
+        # first, then convert to Rational
+        for i in range(len(cobra_model.metabolites)):
+            self.soplex.addRowReal(LPRowReal(0, r_vector, 0))
+        for i, metabolite in enumerate(cobra_model.metabolites):
+            bound = rationalize(metabolite._bound)
             if metabolite._constraint_sense == "E":
-                row = LPRow(vector, EQUAL, bound)
-                #row = LPRow(bound, vector, bound)
+                self.soplex.changeLhsRational(i, bound)
+                self.soplex.changeRhsRational(i, bound)
             elif metabolite._constraint_sense == "L":
-                row = LPRow(vector, LESS_EQUAL, bound)
-                #row = LPRow(-infinity, vector, bound)
+                self.soplex.changeLhsReal(i, -infinity)
+                self.soplex.changeRhsRational(i, bound)
             elif metabolite._constraint_sense == "G":
-                row = LPRow(vector, GREATER_EQUAL, bound)
-                #row = LPRow(bound, vector, infinity)
+                self.soplex.changeLhsRational(i, bound)
+                self.soplex.changeRhsReal(i, infinity)
             else:
                 raise ValueError(
                     "%s constraint sense %s not in {'E', 'G', 'L'}" % \
                     (repr(metabolite), metabolite._constraint_sense))
-            self.soplex.addRowReal(row)
         for reaction in cobra_model.reactions:
-            vector = DSVector()
+            vector = DSVectorRational(len(reaction._metabolites))
             for metabolite, stoichiometry in reaction._metabolites.items():
-                if isinstance(stoichiometry, Basic) and not isinstance(stoichiometry, Number):
+                if isinstance(stoichiometry, Basic) and \
+                        not isinstance(stoichiometry, Number):
                     continue
-                vector.add(cobra_model.metabolites.index(metabolite.id), float(stoichiometry))
-            col = LPCol(float(reaction.objective_coefficient), vector,
-                        float(reaction.upper_bound),
-                        float(reaction.lower_bound))
-            self.soplex.addColReal(col)
-        # TEMP: TODO REMOVE AND HANDLE PARAMTERS FOR REAL
-        self.soplex.setIntParam(VERBOSITY, 0)
-        self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_RATIONAL)
-        self.soplex.setRealParam(FPFEASTOL, 1e-20)
-        self.soplex.setRealParam(FPOPTTOL, 1e-20)
-        
-        
+                vector.add(cobra_model.metabolites.index(metabolite.id),
+                           rationalize(stoichiometry))
+            col = LPColRational(rationalize(reaction.objective_coefficient),
+                                vector,
+                                rationalize(reaction.upper_bound),
+                                rationalize(reaction.lower_bound))
+            self.soplex.addColRational(col)
+ 
+    @classmethod(create_problem)
     def create_problem(cls, cobra_model, objective_sense="maximize"):
         problem = cls(cobra_model)
         problem.set_objective_sense(objective_sense)
         return problem
-    create_problem = classmethod(create_problem)
 
     cpdef set_objective_sense(self, objective_sense="maximize"):
         objective_sense = objective_sense.lower()
@@ -73,15 +96,16 @@ cdef class Soplex:
         elif objective_sense == "minimize":
             self.soplex.setIntParam(OBJSENSE, OBJSENSE_MINIMIZE)
 
-    cpdef change_variable_bounds(self, int index, Real lower_bound, Real upper_bound):
-        self.soplex.changeLowerReal(index, lower_bound)
-        self.soplex.changeUpperReal(index, upper_bound)
+    cpdef change_variable_bounds(self, int index, lower_bound, upper_bound):
+        self.soplex.changeLowerRational(index, rationalize(lower_bound))
+        self.soplex.changeUpperRational(index, rationalize(upper_bound))
 
-    cpdef change_variable_objective(self, int index, Real value):
-        self.soplex.changeObjReal(index, value)
+    cpdef change_variable_objective(self, int index, value):
+        self.soplex.changeObjRational(index, rationalize(value))
 
-    cpdef change_coefficient(self, int met_index, int rxn_index, Real value):
-        self.soplex.changeElementReal(met_index, rxn_index, value)
+    cpdef change_coefficient(self, int met_index, int rxn_index, value):
+        self.soplex.changeElementRational(met_index, rxn_index,
+                                          rationalize(value))
 
     cpdef set_parameter(self, parameter_name, value):
         name_upper = parameter_name.upper()
@@ -163,21 +187,21 @@ cdef class Soplex:
         cdef int i
         # get primals
         cdef int nCols = self.soplex.numColsReal()
-        cdef DVector x_vals = DVector(nCols)
+        cdef DVectorReal x_vals = DVectorReal(nCols)
         self.soplex.getPrimalReal(x_vals)
         solution.x = [x_vals[i] for i in range(nCols)]
         solution.x_dict = {cobra_model.reactions[i].id: x_vals[i]
                            for i in range(nCols)}
         # get duals
         cdef int nRows = self.soplex.numRowsReal()
-        cdef DVector y_vals = DVector(nRows)
+        cdef DVectorReal y_vals = DVectorReal(nRows)
         self.soplex.getDualReal(y_vals)
         solution.y = [y_vals[i] for i in range(nRows)]
         solution.y_dict = {cobra_model.metabolites[i].id: y_vals[i]
                            for i in range(nRows)}
         return solution
 
-    
+    @classmethod
     def solve(cls, cobra_model, **kwargs):
         problem = cls.create_problem(cobra_model)
         problem.solve_problem(objective_sense="maximize")
@@ -186,8 +210,6 @@ cdef class Soplex:
         problem.solve_problem(**kwargs)
         solution = problem.format_solution(cobra_model)
         return solution
-    solve = classmethod(solve)
-        
 
     @property
     def numRows(self):
@@ -201,11 +223,11 @@ cdef class Soplex:
 create_problem = Soplex.create_problem
 def set_objective_sense(lp, objective_sense="maximize"):
     return lp.set_objective_sense(lp, objective_sense=objective_sense)
-cpdef change_variable_bounds(lp, int index, Real lower_bound, Real upper_bound):
+cpdef change_variable_bounds(lp, int index, lower_bound, upper_bound):
     return lp.change_variable_bounds(index, lower_bound, upper_bound)
-cpdef change_variable_objective(lp, int index, Real value):
+cpdef change_variable_objective(lp, int index, value):
     return lp.change_variable_objective(index, value)
-cpdef change_coefficient(lp, int met_index, int rxn_index, Real value):
+cpdef change_coefficient(lp, int met_index, int rxn_index, value):
     return lp.change_coefficient(met_index, rxn_index, value)
 cpdef set_parameter(lp, parameter_name, value):
     return lp.set_parameter(parameter_name, value)
