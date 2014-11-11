@@ -1,6 +1,7 @@
 # cython: embedsignature=True
 
 from decimal import Decimal
+from fractions import Fraction
 
 try:
     from sympy import Basic, Number
@@ -14,7 +15,7 @@ include "soplex_constants.pxi"
 
 cdef Rational rationalize(number):
     cdef Rational r
-    if isinstance(number, (int, Number, Decimal)):
+    if isinstance(number, (int, Number, Decimal, Fraction)):
         r = Rational()
         r.readString(str(number))
         return r
@@ -83,7 +84,7 @@ cdef class Soplex:
                                 rationalize(reaction.lower_bound))
             self.soplex.addColRational(col)
  
-    @classmethod(create_problem)
+    @classmethod
     def create_problem(cls, cobra_model, objective_sense="maximize"):
         problem = cls(cobra_model)
         problem.set_objective_sense(objective_sense)
@@ -204,9 +205,6 @@ cdef class Soplex:
     @classmethod
     def solve(cls, cobra_model, **kwargs):
         problem = cls.create_problem(cobra_model)
-        problem.solve_problem(objective_sense="maximize")
-        problem.solve_problem(objective_sense="minimize")
-        problem.solve_problem(objective_sense="maximize")
         problem.solve_problem(**kwargs)
         solution = problem.format_solution(cobra_model)
         return solution
@@ -218,6 +216,12 @@ cdef class Soplex:
     @property
     def numCols(self):
         return self.soplex.numColsReal()
+
+    def write(self, filename, rational=False):
+        if rational:
+            return self.soplex.writeFileRational(filename)
+        else:
+            return self.soplex.writeFileReal(filename)
 
 # wrappers for all the functions at the module level
 create_problem = Soplex.create_problem

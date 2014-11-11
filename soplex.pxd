@@ -56,6 +56,11 @@ cdef extern from "soplex.h" namespace "soplex":
         SoPlex() except +
         int solve()
         int status()
+        bool hasPrimal()
+        bool hasDual()
+        bool hasBasis()
+        void clearBasis()
+        Real solveTime()
         bool setIntParam(IntParam, int)
         bool setRealParam(RealParam, Real)
         
@@ -76,6 +81,7 @@ cdef extern from "soplex.h" namespace "soplex":
         void changeRhsReal(int, Real)
         void clearLPReal()
         void syncLPReal()
+        bool writeFileReal(char *)
 
         # Rational functions
         int numRowsRational()
@@ -94,6 +100,7 @@ cdef extern from "soplex.h" namespace "soplex":
         void changeRhsRational(int, Rational)
         void clearLPRational()
         void syncLPRational()
+        bool writeFileRational(char *)
 
     enum RowType "soplex::LPRow::Type":
         LESS_EQUAL "soplex::LPRow::LESS_EQUAL"
