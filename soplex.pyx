@@ -25,6 +25,8 @@ cdef Rational rationalize(number):
     else:
         return Rational(float(number))
 
+cdef rational_to_frac(Rational rational):
+    return Fraction(rationalToString(rational))
 
 cdef class Soplex:
     """cobra SoPlex solver object"""
@@ -37,8 +39,8 @@ cdef class Soplex:
         # set default solving parameters
         self.soplex.setIntParam(VERBOSITY, 0)
         self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_RATIONAL)
-        self.soplex.setRealParam(FPFEASTOL, 1e-20)
-        self.soplex.setRealParam(FPOPTTOL, 1e-20)
+        self.soplex.setRealParam(FEASTOL, 1e-20)
+        self.soplex.setRealParam(OPTTOL, 1e-20)
 
     def __dealloc__(self):
         del self.soplex
@@ -176,8 +178,11 @@ cdef class Soplex:
         else:
             return "failed"
 
-    cpdef get_objective_value(self):
-        return self.soplex.objValueReal()
+    cpdef get_objective_value(self, rational=False):
+        if rational:
+            return rational_to_frac(self.soplex.objValueRational())
+        else:
+            return self.soplex.objValueReal()
 
     cpdef format_solution(self, cobra_model):
         status = self.get_status()
