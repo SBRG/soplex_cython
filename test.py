@@ -7,7 +7,7 @@ cobra.test.solvers.test_all()
 
 m = cobra.test.create_test_model()
 
-a = soplex.Soplex()
+a = soplex.Soplex(m)
 s = soplex.solve(m)
 print repr(s)
 #from IPython import embed; embed()
