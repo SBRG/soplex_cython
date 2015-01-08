@@ -1,6 +1,9 @@
 from libcpp cimport bool
 from libcpp.string cimport string
 
+cdef extern from "spxdefines.h":
+    cdef int SOPLEX_VERSION
+    cdef int SOPLEX_SUBVERSION
 
 cdef extern from "soplex.h" namespace "soplex":
     ctypedef float Real

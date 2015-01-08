@@ -12,6 +12,7 @@ except:
 
 include "soplex_constants.pxi"
 
+__soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100, SOPLEX_SUBVERSION)
 
 cdef Rational rationalize(number):
     cdef Rational r
