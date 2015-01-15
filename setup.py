@@ -18,7 +18,7 @@ if platform == "darwin":
 
 ext_modules = cythonize([Extension("soplex", ["soplex.pyx"],
     include_dirs=include_dirs,
-    libraries=["soplex", "gmp", "gmpxx"],
+    libraries=["soplex", "gmp"],
     library_dirs=library_dirs,
     extra_compile_args=["-std=c++0x", '-DWITH_LONG_DOUBLE', "-DSOPLEX_WITH_GMP"],
     language="c++")])
