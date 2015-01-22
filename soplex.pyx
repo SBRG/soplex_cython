@@ -59,20 +59,8 @@ cdef class Soplex:
         for i in range(len(cobra_model.metabolites)):
             self.soplex.addRowReal(LPRowReal(0, r_vector, 0))
         for i, metabolite in enumerate(cobra_model.metabolites):
-            bound = rationalize(metabolite._bound)
-            if metabolite._constraint_sense == "E":
-                self.soplex.changeLhsRational(i, bound)
-                self.soplex.changeRhsRational(i, bound)
-            elif metabolite._constraint_sense == "L":
-                self.soplex.changeLhsReal(i, -infinity)
-                self.soplex.changeRhsRational(i, bound)
-            elif metabolite._constraint_sense == "G":
-                self.soplex.changeLhsRational(i, bound)
-                self.soplex.changeRhsReal(i, infinity)
-            else:
-                raise ValueError(
-                    "%s constraint sense %s not in {'E', 'G', 'L'}" % \
-                    (repr(metabolite), metabolite._constraint_sense))
+            self.change_constraint(i, metabolite._constraint_sense,
+                                   metabolite._bound)
         for reaction in cobra_model.reactions:
             vector = DSVectorRational(len(reaction._metabolites))
             for metabolite, stoichiometry in reaction._metabolites.items():
@@ -110,6 +98,22 @@ cdef class Soplex:
     cpdef change_coefficient(self, int met_index, int rxn_index, value):
         self.soplex.changeElementRational(met_index, rxn_index,
                                           rationalize(value))
+
+    cpdef change_constraint(self, int met_index, str constraint_sense, value):
+        cdef Rational bound = rationalize(value)
+        if constraint_sense == "E":
+            self.soplex.changeLhsRational(met_index, bound)
+            self.soplex.changeRhsRational(met_index, bound)
+        elif constraint_sense == "L":
+            self.soplex.changeLhsReal(met_index, -infinity)
+            self.soplex.changeRhsRational(met_index, bound)
+        elif constraint_sense == "G":
+            self.soplex.changeLhsRational(met_index, bound)
+            self.soplex.changeRhsReal(met_index, infinity)
+        else:
+            raise ValueError(
+                "constraint sense %d (%s) not in {'E', 'G', 'L'}" %
+                (met_index, constraint_sense))
 
     cpdef set_parameter(self, parameter_name, value):
         name_upper = parameter_name.upper()
@@ -239,6 +243,8 @@ cpdef change_variable_objective(lp, int index, value):
     return lp.change_variable_objective(index, value)
 cpdef change_coefficient(lp, int met_index, int rxn_index, value):
     return lp.change_coefficient(met_index, rxn_index, value)
+cpdef change_constraint(lp, int met_index, str constraint_sense, value):
+    return lp.change_constraint(met_index, constraint_sense, value)
 cpdef set_parameter(lp, parameter_name, value):
     return lp.set_parameter(parameter_name, value)
 def solve_problem(lp, **kwargs):
