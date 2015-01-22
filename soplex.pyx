@@ -13,6 +13,7 @@ except:
 include "soplex_constants.pxi"
 
 __soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100, SOPLEX_SUBVERSION)
+__soplex_git_hash__ = getGitHash()
 
 cdef Rational rationalize(number):
     cdef Rational r

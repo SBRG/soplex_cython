@@ -8,7 +8,7 @@ from sys import platform
 from Cython.Distutils import build_ext, Extension
 from Cython.Build import cythonize
 
-include_dirs = ["../build/soplex-2.0.1/src"] # soplex.h
+include_dirs = ["../soplex/src"] # soplex.h
 library_dirs = ["./"] # where libsoplex.a is located
 
 if platform == "darwin":

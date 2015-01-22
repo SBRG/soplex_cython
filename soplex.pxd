@@ -5,6 +5,9 @@ cdef extern from "spxdefines.h":
     cdef int SOPLEX_VERSION
     cdef int SOPLEX_SUBVERSION
 
+cdef extern from "spxgithash.h" namespace "soplex":
+    cdef char* getGitHash()
+
 cdef extern from "soplex.h" namespace "soplex":
     ctypedef float Real
     cdef Real infinity
