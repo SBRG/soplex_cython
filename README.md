@@ -1,26 +1,30 @@
 soplex_cython
 =============
 
-Cython bindings to soplex 2.0.0
+Cython bindings to soplex 2. Build soplex first, then this extension.
 
-First build soplex using the following steps:
-
-1. Install gmp.
+Build soplex
+------------
+1. [Download](http://soplex.zib.de/#download) and unzip the soplex source code.
+2. Install gmp.
   - mac: ```brew install gmp```
   - Ubuntu: ```sudo apt-get install libgmp-dev```
-2. Edit the Makefile
+3. Edit the soplex Makefile
  - Remove -Wconversion from the GCCWARN section
  - Add -DWITH_LONG_DOUBLE to the CPPFLAGS section
  - mac: add ```-I/usr/local/include``` to the CPPFLAGS section
-3. Compile soplex using ```make SHARED=true GMP=true ZLIB=false VERBOSE=true```
+4. Compile soplex using ```make SHARED=true GMP=true ZLIB=false VERBOSE=true```
  - This may fail to link, which is fine.
-4. Compile a library for static linking (libsoplex.a)
+5. Compile a library for static linking (libsoplex.a)
  - On a mac first run ```rm obj/*/lib/gzstream.o``` 
  - Run ```ar crs libsoplex.a obj/*/lib/*```
 
-Now that soplex is built, copy libsoplex.a to the soplex_cython directory.
+Build soplex_cython
+-------------------
 
-Edit setup.py so include_dirs points to the src folder of soplex.
-
-At this point, Running ```./build.sh``` will build the extension and run the
+1. Copy libsoplex.a from the previous build step to the soplex_cython directory.
+2. Install Cython if not installed with ```pip install cython```
+3. Edit setup.py so include_dirs points to the src folder of soplex.
+4. Run ```./build.sh``` which will build the extension and run the
 cobrapy solver unit tests.
+5. Copy soplex.so into the ```cobra/solvers``` directory.
