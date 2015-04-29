@@ -117,6 +117,8 @@ cdef class Soplex:
                 (met_index, constraint_sense))
 
     cpdef set_parameter(self, parameter_name, value):
+        if parameter_name == "objective_sense":
+            self.set_objective_sense(value)
         name_upper = parameter_name.upper()
         if parameter_name == "verbose" or name_upper == "VERBOSITY":
             if value is True:
