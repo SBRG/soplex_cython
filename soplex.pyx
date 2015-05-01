@@ -32,10 +32,14 @@ cdef rational_to_frac(Rational rational):
 
 cdef class Soplex:
     """cobra SoPlex solver object"""
-    cdef SoPlex *soplex
+    # Because we use the default constructor for soplex,
+    # we can do this instead of self.soplex = new SoPlex() in
+    # __cinit__() and del self.soplex in __dealloc__().
+    cdef SoPlex soplex
 
-    def __cinit__(self):
-        self.soplex = new SoPlex()
+    def __init__(self, cobra_model=None):
+        # set the default paramters
+
         # should sync automatically between Real and Rational
         self.soplex.setIntParam(SYNCMODE, SYNCMODE_AUTO)
         # set default solving parameters
@@ -44,10 +48,7 @@ cdef class Soplex:
         self.soplex.setRealParam(FEASTOL, 1e-20)
         self.soplex.setRealParam(OPTTOL, 1e-20)
 
-    def __dealloc__(self):
-        del self.soplex
-
-    def __init__(self, cobra_model=None):
+        # create an LP from the cobra model
         if cobra_model is None:
             return
         cdef DSVectorRational vector
