@@ -237,6 +237,22 @@ cdef class Soplex:
         else:
             return self.soplex.writeFileReal(filename)
 
+    @property
+    def hasPrimal(self):
+        return self.soplex.hasPrimal()
+
+    @property
+    def hasBasis(self):
+        return self.soplex.hasBasis()
+
+    @property
+    def solveTime(self):
+        return self.soplex.solveTime()
+
+    @property
+    def numIterations(self):
+        return self.soplex.numIterations()
+
 # wrappers for all the functions at the module level
 create_problem = Soplex.create_problem
 def set_objective_sense(lp, objective_sense="maximize"):

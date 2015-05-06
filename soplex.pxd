@@ -73,7 +73,13 @@ cdef extern from "soplex.h" namespace "soplex":
         bool hasDual()
         bool hasBasis()
         void clearBasis()
+        int numIterations()
         Real solveTime()
+        char * getStarterName()
+        char * getScalerName()
+        char * getPricerName()
+        char * getRatioTesterName()
+        bool setBoolParam(BoolParam, bool)
         bool setIntParam(IntParam, int)
         bool setRealParam(RealParam, Real)
         
@@ -120,6 +126,18 @@ cdef extern from "soplex.h" namespace "soplex":
         EQUAL "soplex::LPRow::EQUAL"
         GREATER_EQUAL "soplex::LPRow::GREATER_EQUAL"
         RANGE "soplex::LPRow::GREATER_EQUAL"
+
+    enum BoolParam "soplex::SoPlex::BoolParam":
+        LIFTING "soplex::SoPlex::LIFTING"
+        EQTRANS "soplex::SoPlex::EQTRANS"
+        TESTDUALINF "soplex::SoPlex::TESTDUALINF"
+        RATFAC "soplex::SoPlex::RATFAC"
+        ACCEPTCYCLING "soplex::SoPlex::ACCEPTCYCLING"
+        RATREC "soplex::SoPlex::RATREC"
+        POWERSCALING "soplex::SoPlex::POWERSCALING"
+        RATFACJUMP "soplex::SoPlex::RATFACJUMP"
+        FEASRELAX "soplex::SoPlex::FEASRELAX"
+        BOOLPARAM_COUNT "soplex::SoPlex::BOOLPARAM_COUNT"
 
     enum IntParam "soplex::SoPlex::IntParam":
         OBJSENSE "soplex::SoPlex::OBJSENSE"
