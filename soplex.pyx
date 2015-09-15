@@ -25,7 +25,10 @@ cdef Rational rationalize(number):
         # TODO handle better
         return Rational(0)
     else:
-        return Rational(float(number))
+        r = Rational()
+        s = "%15g" % number
+        r.readString(s.strip())
+        return r
 
 cdef rational_to_frac(Rational rational):
     return Fraction(rationalToString(rational))
@@ -180,11 +183,13 @@ cdef class Soplex:
         cdef int status = self.soplex.status()
         if status == OPTIMAL:
             return "optimal"
-        elif status == INFEASIBLE or INForUNBD:
+        elif status == INFEASIBLE:
             return "infeasible"
         elif status == UNBOUNDED:
             return "unbounded"
-        else:
+        else:  # this includes the status INForUNBD
+            # maybe print an error to turn off presolve
+            # if INForUNBD is the result
             return "failed"
 
     cpdef get_objective_value(self, rational=False):

@@ -162,7 +162,7 @@ cdef extern from "soplex.h" namespace "soplex":
         HYPER_PRICING "soplex::SoPlex::HYPER_PRICING"
         INTPARAM_COUNT "soplex::SoPlex::INTPARAM_COUNT"
 
-    enum RealParam "soplex::Soplex::RealParam":
+    enum RealParam "soplex::SoPlex::RealParam":
         FEASTOL "soplex::SoPlex::FEASTOL"
         OPTTOL "soplex::SoPlex::OPTTOL"
         EPSILON_ZERO "soplex::SoPlex::EPSILON_ZERO"
