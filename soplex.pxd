@@ -139,7 +139,7 @@ cdef extern from "soplex.h" namespace "soplex":
         FEASRELAX "soplex::SoPlex::FEASRELAX"
         BOOLPARAM_COUNT "soplex::SoPlex::BOOLPARAM_COUNT"
 
-    enum IntParam "soplex::SoPlex::IntParam":
+    ctypedef enum IntParam "soplex::SoPlex::IntParam":
         OBJSENSE "soplex::SoPlex::OBJSENSE"
         REPRESENTATION "soplex::SoPlex::REPRESENTATION"
         ALGORITHM "soplex::SoPlex::ALGORITHM"
@@ -162,7 +162,7 @@ cdef extern from "soplex.h" namespace "soplex":
         HYPER_PRICING "soplex::SoPlex::HYPER_PRICING"
         INTPARAM_COUNT "soplex::SoPlex::INTPARAM_COUNT"
 
-    enum RealParam "soplex::SoPlex::RealParam":
+    ctypedef enum RealParam "soplex::SoPlex::RealParam":
         FEASTOL "soplex::SoPlex::FEASTOL"
         OPTTOL "soplex::SoPlex::OPTTOL"
         EPSILON_ZERO "soplex::SoPlex::EPSILON_ZERO"
