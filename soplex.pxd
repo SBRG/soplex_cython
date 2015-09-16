@@ -121,13 +121,13 @@ cdef extern from "soplex.h" namespace "soplex":
         void syncLPRational()
         bool writeFileRational(char *)
 
-    enum RowType "soplex::LPRow::Type":
+    ctypedef enum RowType "soplex::LPRow::Type":
         LESS_EQUAL "soplex::LPRow::LESS_EQUAL"
         EQUAL "soplex::LPRow::EQUAL"
         GREATER_EQUAL "soplex::LPRow::GREATER_EQUAL"
         RANGE "soplex::LPRow::GREATER_EQUAL"
 
-    enum BoolParam "soplex::SoPlex::BoolParam":
+    ctypedef enum BoolParam "soplex::SoPlex::BoolParam":
         LIFTING "soplex::SoPlex::LIFTING"
         EQTRANS "soplex::SoPlex::EQTRANS"
         TESTDUALINF "soplex::SoPlex::TESTDUALINF"
@@ -181,32 +181,32 @@ cdef extern from "soplex.h" namespace "soplex":
         SPARSITY_THRESHOLD "soplex::SoPlex::SPARSITY_THRESHOLD"
         REALPARAM_COUNT "soplex::SoPlex::REALPARAM_COUNT"
 
-    enum:
+    ctypedef enum:
         OBJSENSE_MINIMIZE "soplex::SoPlex::OBJSENSE_MINIMIZE"
         OBJSENSE_MAXIMIZE "soplex::SoPlex::OBJSENSE_MAXIMIZE"
 
-    enum STATUS "soplex::SPxSolver::Status":
+    ctypedef enum STATUS "soplex::SPxSolver::Status":
         OPTIMAL "soplex::SPxSolver::OPTIMAL"
         INFEASIBLE "soplex::SPxSolver::INFEASIBLE"
         UNBOUNDED "soplex::SPxSolver::UNBOUNDED"
         INForUNBD "soplex::SPxSolver::INForUNBD"
         ERROR "soplex::SPxSolver::ERROR"
 
-    enum:
+    ctypedef enum:
         SYNCMODE_ONLYREAL "soplex::SoPlex::SYNCMODE_ONLYREAL"
         SYNCMODE_AUTO "soplex::SoPlex::SYNCMODE_AUTO"
         SYNCMODE_MANUAL "soplex::SoPlex::SYNCMODE_MANUAL"
 
-    enum:
+    ctypedef enum:
         READMODE_REAL "soplex::SoPlex::READMODE_REAL"
         READMODE_RATIONAL "soplex::SoPlex::READMODE_RATIONAL"
 
-    enum:
+    ctypedef enum:
         SOLVEMODE_REAL "soplex::SoPlex::SOLVEMODE_REAL"
         SOLVEMODE_AUTO "soplex::SoPlex::SOLVEMODE_AUTO"
         SOLVEMODE_RATIONAL "soplex::SoPlex::SOLVEMODE_RATIONAL"
 
-    enum:
+    ctypedef enum:
         CHECKMODE_REAL "soplex::SoPlex::CHECKMODE_REAL"
         CHECKMODE_AUTO "soplex::SoPlex::CHECKMODE_AUTO"
         CHECKMODE_RATIONAL "soplex::SoPlex::CHECKMODE_RATIONAL"
