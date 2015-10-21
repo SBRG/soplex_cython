@@ -12,7 +12,8 @@ except:
 
 include "soplex_constants.pxi"
 
-__soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100, SOPLEX_SUBVERSION)
+__version__ = "0.0.1"
+__soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100., SOPLEX_SUBVERSION)
 __soplex_git_hash__ = getGitHash()
 
 cdef Rational rationalize(number):
@@ -126,7 +127,7 @@ cdef class Soplex:
             self.set_objective_sense(value)
         elif parameter_name == "verbose" or name_upper == "VERBOSITY":
             if value is True:
-                self.soplex.setIntParam(VERBOSITY, 5)
+                self.soplex.setIntParam(VERBOSITY, 3)
             else:
                 self.soplex.setIntParam(VERBOSITY, value)
         elif name_upper == "SOLVEMODE":

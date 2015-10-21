@@ -1,6 +1,10 @@
 build/
+dist/
 libsoplex.a
 libgmp.a
+soplex.lib
+gmp.lib
+gmp.h
 gurobi.log
 soplex.cpp
 soplex.so
