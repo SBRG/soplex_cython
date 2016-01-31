@@ -67,21 +67,35 @@ cdef extern from "soplex.h" namespace "soplex":
 
     cdef cppclass SoPlex:
         SoPlex() except +
-        int solve()
-        int status()
+        STATUS solve()
+        STATUS status()
         bool hasPrimal()
         bool hasDual()
-        bool hasBasis()
-        void clearBasis()
         int numIterations()
         Real solveTime()
+        char * statisticString()
         char * getStarterName()
         char * getScalerName()
         char * getPricerName()
         char * getRatioTesterName()
+        
+        # Settings functions
+        bool boolParam(BoolParam param)
+        int intParam(IntParam param)
+        Real realParam(RealParam param)
         bool setBoolParam(BoolParam, bool)
         bool setIntParam(IntParam, int)
         bool setRealParam(RealParam, Real)
+        bool saveSettingsFile(char *filename, bool onlyChanged=false)
+        bool loadSettingsFile(char *filename)
+        bool parseSettingsString(char *line)
+
+        # Basis functions
+        bool hasBasis()
+        SPxBasis__SPxStatus basisStatus() 
+        void getBasis(VarStatus[], VarStatus[])
+        void setBasis(VarStatus[], VarStatus[])
+        void clearBasis()
         
         # Real functions
         int numRowsReal()
@@ -160,6 +174,7 @@ cdef extern from "soplex.h" namespace "soplex":
         SOLVEMODE "soplex::SoPlex::SOLVEMODE"
         CHECKMODE "soplex::SoPlex::CHECKMODE"
         HYPER_PRICING "soplex::SoPlex::HYPER_PRICING"
+        RATFAC_MINSTALLS "soplex::SoPlex::RATFAC_MINSTALLS"
         INTPARAM_COUNT "soplex::SoPlex::INTPARAM_COUNT"
 
     ctypedef enum RealParam "soplex::SoPlex::RealParam":
@@ -185,12 +200,25 @@ cdef extern from "soplex.h" namespace "soplex":
         OBJSENSE_MINIMIZE "soplex::SoPlex::OBJSENSE_MINIMIZE"
         OBJSENSE_MAXIMIZE "soplex::SoPlex::OBJSENSE_MAXIMIZE"
 
-    ctypedef enum STATUS "soplex::SPxSolver::Status":
+    cpdef enum STATUS "soplex::SPxSolver::Status":
+        ERROR "soplex::SPxSolver::ERROR"
+        NO_RATIOTESTER "soplex::SPxSolver::NO_RATIOTESTER"
+        NO_PRICER "soplex::SPxSolver::NO_PRICER"
+        NO_SOLVER "soplex::SPxSolver::NO_SOLVER"
+        NOT_INIT "soplex::SPxSolver::NOT_INIT"
+        ABORT_CYCLING "soplex::SPxSolver::ABORT_CYCLING"
+        ABORT_TIME "soplex::SPxSolver::ABORT_TIME"
+        ABORT_ITER "soplex::SPxSolver::ABORT_ITER"
+        ABORT_VALUE "soplex::SPxSolver::ABORT_VALUE"
+        SINGULAR "soplex::SPxSolver::SINGULAR"
+        NO_PROBLEM "soplex::SPxSolver::NO_PROBLEM"
+        REGULAR "soplex::SPxSolver::REGULAR"
+        RUNNING "soplex::SPxSolver::RUNNING"
+        UNKNOWN "soplex::SPxSolver::UNKNOWN"
         OPTIMAL "soplex::SPxSolver::OPTIMAL"
         INFEASIBLE "soplex::SPxSolver::INFEASIBLE"
         UNBOUNDED "soplex::SPxSolver::UNBOUNDED"
         INForUNBD "soplex::SPxSolver::INForUNBD"
-        ERROR "soplex::SPxSolver::ERROR"
 
     ctypedef enum:
         SYNCMODE_ONLYREAL "soplex::SoPlex::SYNCMODE_ONLYREAL"
@@ -210,3 +238,25 @@ cdef extern from "soplex.h" namespace "soplex":
         CHECKMODE_REAL "soplex::SoPlex::CHECKMODE_REAL"
         CHECKMODE_AUTO "soplex::SoPlex::CHECKMODE_AUTO"
         CHECKMODE_RATIONAL "soplex::SoPlex::CHECKMODE_RATIONAL"
+
+cdef extern from "spxsolver.h" namespace "soplex":
+    cdef cppclass SPxSolver
+    ctypedef enum VarStatus "soplex::SPxSolver::VarStatus":
+        ON_UPPER "soplex::SPxSolver::ON_UPPER"
+        ON_LOWER "soplex::SPxSolver::ON_LOWER"
+        FIXED "soplex::SPxSolver::FIXED"
+        ZERO "soplex::SPxSolver::ZERO"
+        BASIC "soplex::SPxSolver::BASIC"
+        UNDEFINED "soplex::SPxSolver::UNDEFINED"
+
+cdef extern from "spxbasis.h" namespace "soplex":
+    cdef cppclass SPxBasis
+    ctypedef enum SPxBasis__SPxStatus "soplex::SPxBasis::SPxStatus":
+        SPxBasis_NO_PROBLEM "soplex::SPxBasis::NO_PROBLEM"
+        SPxBasis_SINGULAR "soplex::SPxBasis::SINGULAR"
+        SPxBasis_REGULAR "soplex::SPxBasis::REGULAR"
+        SPxBasis_DUAL "soplex::SPxBasis::DUAL"
+        SPxBasis_PRIMAL "soplex::SPxBasis::PRIMAL"
+        SPxBasis_OPTIMAL "soplex::SPxBasis::OPTIMAL"
+        SPxBasis_UNBOUDNED "soplex::SPxBasis::UNBOUDNED"
+        SPxBasis_INFEASIBLE "soplex::SPxBasis::INFEASIBLE"

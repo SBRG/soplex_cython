@@ -1,5 +1,7 @@
 # cython: embedsignature=True
 
+from libc.stdlib cimport malloc, free
+
 from decimal import Decimal
 from fractions import Fraction
 
@@ -12,7 +14,7 @@ except:
 
 include "soplex_constants.pxi"
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100., SOPLEX_SUBVERSION)
 __soplex_git_hash__ = getGitHash()
 
@@ -40,6 +42,16 @@ cdef class Soplex:
     # we can do this instead of self.soplex = new SoPlex() in
     # __cinit__() and del self.soplex in __dealloc__().
     cdef SoPlex soplex
+    cdef VarStatus* row_basis
+    cdef VarStatus* col_basis
+    cdef readonly bool reset_basis
+    cdef int _reset_basis_iter_cutoff
+
+    def __dealloc__(self):
+        if self.row_basis is not NULL:
+            free(self.row_basis)
+        if self.col_basis is not NULL:
+            free(self.col_basis)
 
     def __init__(self, cobra_model=None):
         # set the default paramters
@@ -52,6 +64,9 @@ cdef class Soplex:
         self.soplex.setRealParam(FEASTOL, 1e-20)
         self.soplex.setRealParam(OPTTOL, 1e-20)
 
+        self._reset_basis_iter_cutoff = 10000
+        self.reset_basis = False
+
         # create an LP from the cobra model
         if cobra_model is None:
             return
@@ -60,9 +75,11 @@ cdef class Soplex:
         cdef Rational bound
         cdef int i
         cdef DSVectorReal r_vector = DSVectorReal(0)
+        cdef int m = len(cobra_model.metabolites)
+        cdef int n = len(cobra_model.reactions)
         # To get around lack of infinity in Rational, create bounds with Real
         # first, then convert to Rational
-        for i in range(len(cobra_model.metabolites)):
+        for i in range(m):
             self.soplex.addRowReal(LPRowReal(0, r_vector, 0))
         for i, metabolite in enumerate(cobra_model.metabolites):
             self.change_constraint(i, metabolite._constraint_sense,
@@ -80,6 +97,12 @@ cdef class Soplex:
                                 rationalize(reaction.upper_bound),
                                 rationalize(reaction.lower_bound))
             self.soplex.addColRational(col)
+
+        # initialize the row and column basis
+        self.row_basis = <VarStatus *>malloc(m * sizeof(VarStatus))
+        self.col_basis = <VarStatus *>malloc(n * sizeof(VarStatus))
+        self.soplex.getBasis(self.row_basis, self.col_basis)
+
  
     @classmethod
     def create_problem(cls, cobra_model, objective_sense="maximize"):
@@ -133,7 +156,17 @@ cdef class Soplex:
         elif name_upper == "SOLVEMODE":
             self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_VALUES[value.upper()]) 
         elif name_upper == "CHECKMODE":
-            self.soplex.setIntParam(CHECKMODE, CHECKMODE_VALUES[value.upper()]) 
+            self.soplex.setIntParam(CHECKMODE, CHECKMODE_VALUES[value.upper()])
+        elif name_upper == "FACTOR_UPDATE_MAX":
+            self.soplex.setIntParam(FACTOR_UPDATE_MAX, int(value))
+        elif name_upper == "ITERLIMIT":
+            self.soplex.setIntParam(ITERLIMIT, int(value))
+        elif name_upper == "REFLIMIT":
+            self.soplex.setIntParam(REFLIMIT, int(value))
+        elif name_upper == "STALLREFLIMIT":
+            self.soplex.setIntParam(STALLREFLIMIT, int(value))
+        elif name_upper == "RATFAC_MINSTALLS":
+            self.soplex.setIntParam(RATFAC_MINSTALLS, int(value))
         elif parameter_name in IntParameters:
             raise NotImplementedError("todo implement " + parameter_name)
         # setRealParam section
@@ -169,6 +202,8 @@ cdef class Soplex:
             self.soplex.setRealParam(LIFTMAXVAL, value)
         elif name_upper == "SPARSITY_THRESHOLD":
             self.soplex.setRealParam(SPARSITY_THRESHOLD, value)
+        elif name_upper == "RESET_BASIS_ITER_CUTOFF":
+            self._reset_basis_iter_cutoff = value
         else:
             raise ValueError("Unknown parameter '%s'" % parameter_name)
 
@@ -177,7 +212,30 @@ cdef class Soplex:
             self.set_objective_sense(kwargs.pop("objective_sense"))
         for key, value in kwargs.items():
             self.set_parameter(key, value)
-        self.soplex.solve()
+        
+        # try to solve with a set basis
+        cdef int iterlim = self.soplex.intParam(ITERLIMIT)
+        cdef int new_iterlim
+        if iterlim > 0:  # -1 iterlim means it's unlimited
+            new_iterlim = min(self._reset_basis_iter_cutoff, iterlim)
+        else:
+            new_iterlim = self._reset_basis_iter_cutoff
+        self.soplex.setIntParam(ITERLIMIT, new_iterlim)
+        self.soplex.setBasis(self.row_basis, self.col_basis)
+        cdef STATUS result = self.soplex.solve()
+        self.soplex.setIntParam(ITERLIMIT, iterlim)  # reset iterlim
+
+        # if it didn't solve with the set basis, try again
+        if result == ABORT_ITER or result == ABORT_TIME:  # silly SoPlex bug
+            self.reset_basis = True
+            self.soplex.clearBasis()
+            self.soplex.solve()
+        else:
+            self.reset_basis = False
+
+        # save the basis for next time
+        if result == OPTIMAL:
+            self.soplex.getBasis(self.row_basis, self.col_basis)
         return self.get_status()
 
     cpdef get_status(self):
@@ -188,6 +246,8 @@ cdef class Soplex:
             return "infeasible"
         elif status == UNBOUNDED:
             return "unbounded"
+        elif status == ABORT_VALUE:
+            return "abort_value"
         else:  # this includes the status INForUNBD
             # maybe print an error to turn off presolve
             # if INForUNBD is the result
