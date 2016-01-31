@@ -3,8 +3,20 @@ soplex_cython
 
 Cython bindings to soplex 2. Build soplex first, then this extension.
 
-Build soplex
-------------
+Install using wheels
+--------------------
+
+This is still experimental, but much easier. It's probably worth trying out.
+On a Mac, this may result in a performance penalty, however. For speed on
+a Mac, you need to use 64-bit-only gmp.
+
+1. [Download](https://github.com/SBRG/soplex_cython/releases) the appropriate
+   wheel file from the releases page.
+2. Run ```pip install <path_to_wheel_file>```
+
+
+Build soplex yourself
+---------------------
 1. [Download](http://soplex.zib.de/#download) and unzip the soplex source code.
 2. Install gmp.
   - mac: ```brew install gmp``` and add ```-I/usr/local/include``` to the
