@@ -14,9 +14,10 @@ except:
 
 include "soplex_constants.pxi"
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100., SOPLEX_SUBVERSION)
 __soplex_git_hash__ = getGitHash()
+
 
 cdef Rational rationalize(number):
     cdef Rational r
@@ -46,6 +47,12 @@ cdef class Soplex:
     cdef VarStatus* col_basis
     cdef readonly bool reset_basis
     cdef int _reset_basis_iter_cutoff
+
+    cdef bool verbose(self):
+        return self.soplex.intParam(VERBOSITY)
+
+    cpdef int soplex_status(self):
+        return self.soplex.status()
 
     def __dealloc__(self):
         if self.row_basis is not NULL:
@@ -220,18 +227,26 @@ cdef class Soplex:
             new_iterlim = min(self._reset_basis_iter_cutoff, iterlim)
         else:
             new_iterlim = self._reset_basis_iter_cutoff
-        self.soplex.setIntParam(ITERLIMIT, new_iterlim)
-        self.soplex.setBasis(self.row_basis, self.col_basis)
+        if self.hasBasis:  # don't want to force limit on first solve
+            self.soplex.setIntParam(ITERLIMIT, new_iterlim)
+            self.soplex.setBasis(self.row_basis, self.col_basis)
         cdef STATUS result = self.soplex.solve()
         self.soplex.setIntParam(ITERLIMIT, iterlim)  # reset iterlim
+        if self.verbose():
+            print(self.soplex.statisticString())
 
         # if it didn't solve with the set basis, try again
         if result == ABORT_ITER or result == ABORT_TIME:  # silly SoPlex bug
             self.reset_basis = True
             self.soplex.clearBasis()
             self.soplex.solve()
+            if self.verbose():
+                print("reset basis")
+                print(self.soplex.statisticString())
         else:
             self.reset_basis = False
+            if self.verbose():
+                print(self.soplex.statisticString())
 
         # save the basis for next time
         if result == OPTIMAL:
@@ -289,6 +304,9 @@ cdef class Soplex:
         solution = problem.format_solution(cobra_model)
         return solution
 
+    cpdef clear_basis(self):
+        self.soplex.clearBasis()
+
     @property
     def numRows(self):
         return self.soplex.numRowsReal()
@@ -297,7 +315,16 @@ cdef class Soplex:
     def numCols(self):
         return self.soplex.numColsReal()
 
-    def write(self, filename, rational=False):
+    cpdef write(self, filename, state=True, rational=False):
+        if state:
+            if filename.endswith(".lp"):
+                filename = filename[:-3]
+            if rational:
+                self.soplex.writeStateRational(filename, NULL, NULL, True)
+                return
+            else:
+                self.soplex.writeStateReal(filename, NULL, NULL, True)
+                return
         if rational:
             return self.soplex.writeFileRational(filename)
         else:

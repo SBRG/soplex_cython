@@ -73,7 +73,7 @@ cdef extern from "soplex.h" namespace "soplex":
         bool hasDual()
         int numIterations()
         Real solveTime()
-        char * statisticString()
+        string statisticString()
         char * getStarterName()
         char * getScalerName()
         char * getPricerName()
@@ -86,7 +86,7 @@ cdef extern from "soplex.h" namespace "soplex":
         bool setBoolParam(BoolParam, bool)
         bool setIntParam(IntParam, int)
         bool setRealParam(RealParam, Real)
-        bool saveSettingsFile(char *filename, bool onlyChanged=false)
+        bool saveSettingsFile(char *filename)
         bool loadSettingsFile(char *filename)
         bool parseSettingsString(char *line)
 
@@ -115,6 +115,11 @@ cdef extern from "soplex.h" namespace "soplex":
         void clearLPReal()
         void syncLPReal()
         bool writeFileReal(char *)
+        # cython bug for optional arguments
+        void writeStateReal(char *)
+        void writeStateReal(char *, NameSet *rowNames)
+        void writeStateReal(char *, NameSet *rowNames, NameSet *colNames)
+        void writeStateReal(char *, NameSet *rowNames, NameSet *colNames, bool cpxFormat)
 
         # Rational functions
         int numRowsRational()
@@ -134,6 +139,10 @@ cdef extern from "soplex.h" namespace "soplex":
         void clearLPRational()
         void syncLPRational()
         bool writeFileRational(char *)
+        void writeStateRational(char *)
+        void writeStateRational(char *, NameSet *rowNames)
+        void writeStateRational(char *, NameSet *rowNames, NameSet *colNames)
+        void writeStateRational(char *, NameSet *rowNames, NameSet *colNames, bool cpxFormat)
 
     ctypedef enum RowType "soplex::LPRow::Type":
         LESS_EQUAL "soplex::LPRow::LESS_EQUAL"
@@ -238,6 +247,11 @@ cdef extern from "soplex.h" namespace "soplex":
         CHECKMODE_REAL "soplex::SoPlex::CHECKMODE_REAL"
         CHECKMODE_AUTO "soplex::SoPlex::CHECKMODE_AUTO"
         CHECKMODE_RATIONAL "soplex::SoPlex::CHECKMODE_RATIONAL"
+
+cdef extern from "nameset.h" namespace "soplex":
+    cdef cppclass NameSet:
+        Name() except +
+        Name(const char * str) except +
 
 cdef extern from "spxsolver.h" namespace "soplex":
     cdef cppclass SPxSolver
