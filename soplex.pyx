@@ -215,6 +215,7 @@ cdef class Soplex:
             raise ValueError("Unknown parameter '%s'" % parameter_name)
 
     def solve_problem(self, **kwargs):
+        cdef STATUS result
         if "objective_sense" in kwargs:
             self.set_objective_sense(kwargs.pop("objective_sense"))
         for key, value in kwargs.items():
@@ -230,16 +231,18 @@ cdef class Soplex:
         if self.hasBasis:  # don't want to force limit on first solve
             self.soplex.setIntParam(ITERLIMIT, new_iterlim)
             self.soplex.setBasis(self.row_basis, self.col_basis)
-        cdef STATUS result = self.soplex.solve()
-        self.soplex.setIntParam(ITERLIMIT, iterlim)  # reset iterlim
+        with nogil:
+            result = self.soplex.solve()
+            self.soplex.setIntParam(ITERLIMIT, iterlim)  # reset iterlim
         if self.verbose():
             print(self.soplex.statisticString())
 
         # if it didn't solve with the set basis, try again
         if result == ABORT_ITER or result == ABORT_TIME:  # silly SoPlex bug
             self.reset_basis = True
-            self.soplex.clearBasis()
-            self.soplex.solve()
+            with nogil:
+                self.soplex.clearBasis()
+                self.soplex.solve()
             if self.verbose():
                 print("reset basis")
                 print(self.soplex.statisticString())

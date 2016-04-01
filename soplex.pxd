@@ -67,7 +67,7 @@ cdef extern from "soplex.h" namespace "soplex":
 
     cdef cppclass SoPlex:
         SoPlex() except +
-        STATUS solve()
+        STATUS solve() nogil
         STATUS status()
         bool hasPrimal()
         bool hasDual()
@@ -83,9 +83,9 @@ cdef extern from "soplex.h" namespace "soplex":
         bool boolParam(BoolParam param)
         int intParam(IntParam param)
         Real realParam(RealParam param)
-        bool setBoolParam(BoolParam, bool)
-        bool setIntParam(IntParam, int)
-        bool setRealParam(RealParam, Real)
+        bool setBoolParam(BoolParam, bool) nogil
+        bool setIntParam(IntParam, int) nogil
+        bool setRealParam(RealParam, Real) nogil
         bool saveSettingsFile(char *filename)
         bool loadSettingsFile(char *filename)
         bool parseSettingsString(char *line)
@@ -95,7 +95,7 @@ cdef extern from "soplex.h" namespace "soplex":
         SPxBasis__SPxStatus basisStatus() 
         void getBasis(VarStatus[], VarStatus[])
         void setBasis(VarStatus[], VarStatus[])
-        void clearBasis()
+        void clearBasis() nogil
         
         # Real functions
         int numRowsReal()
