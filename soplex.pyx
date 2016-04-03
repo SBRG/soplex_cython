@@ -14,7 +14,7 @@ except:
 
 include "soplex_constants.pxi"
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100., SOPLEX_SUBVERSION)
 __soplex_git_hash__ = getGitHash()
 
