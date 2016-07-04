@@ -1,6 +1,8 @@
 # cython: embedsignature=True
 
 from libc.stdlib cimport malloc, free
+from cpython.exc cimport PyErr_CheckSignals
+
 
 from decimal import Decimal
 from fractions import Fraction
@@ -14,10 +16,12 @@ except:
 
 include "soplex_constants.pxi"
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __soplex_version__ = "%.2f.%d" % (SOPLEX_VERSION/100., SOPLEX_SUBVERSION)
 __soplex_git_hash__ = getGitHash()
 
+cpdef dict get_status_mapping():
+    return {i.real: i.name for i in STATUS}
 
 cdef Rational rationalize(number):
     cdef Rational r
@@ -33,6 +37,12 @@ cdef Rational rationalize(number):
         s = "%15g" % number
         r.readString(s.strip())
         return r
+
+cdef bool is_status_error(STATUS status) nogil:
+    if status == OPTIMAL or status == INFEASIBLE or status == UNBOUNDED:
+        return False
+    return True
+
 
 cdef rational_to_frac(Rational rational):
     return Fraction(rationalToString(rational))
@@ -67,6 +77,7 @@ cdef class Soplex:
         self.soplex.setIntParam(SYNCMODE, SYNCMODE_AUTO)
         # set default solving parameters
         self.soplex.setIntParam(VERBOSITY, 0)
+        self.soplex.setIntParam(ITERLIMIT, 2147483647)  # 2 ** 31 - 1
         self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_RATIONAL)
         self.soplex.setRealParam(FEASTOL, 1e-20)
         self.soplex.setRealParam(OPTTOL, 1e-20)
@@ -80,7 +91,7 @@ cdef class Soplex:
         cdef DSVectorRational vector
         cdef LPColRational col
         cdef Rational bound
-        cdef int i
+        cdef int i, s
         cdef DSVectorReal r_vector = DSVectorReal(0)
         cdef int m = len(cobra_model.metabolites)
         cdef int n = len(cobra_model.reactions)
@@ -106,9 +117,15 @@ cdef class Soplex:
             self.soplex.addColRational(col)
 
         # initialize the row and column basis
-        self.row_basis = <VarStatus *>malloc(m * sizeof(VarStatus))
-        self.col_basis = <VarStatus *>malloc(n * sizeof(VarStatus))
-        self.soplex.getBasis(self.row_basis, self.col_basis)
+        with nogil:
+            s = sizeof(VarStatus)
+            self.row_basis = <VarStatus *>malloc(m * s)
+            self.col_basis = <VarStatus *>malloc(n * s)
+            for i in range(m):
+                self.row_basis[i] = ON_UPPER
+            for i in range(n):
+                self.col_basis[i] = ON_UPPER
+            self.soplex.getBasis(self.row_basis, self.col_basis)
 
  
     @classmethod
@@ -222,34 +239,30 @@ cdef class Soplex:
             self.set_parameter(key, value)
         
         # try to solve with a set basis
+        self.reset_basis = False
         cdef int iterlim = self.soplex.intParam(ITERLIMIT)
         cdef int new_iterlim
         if iterlim > 0:  # -1 iterlim means it's unlimited
             new_iterlim = min(self._reset_basis_iter_cutoff, iterlim)
         else:
             new_iterlim = self._reset_basis_iter_cutoff
-        if self.hasBasis:  # don't want to force limit on first solve
-            self.soplex.setIntParam(ITERLIMIT, new_iterlim)
-            self.soplex.setBasis(self.row_basis, self.col_basis)
+        self.soplex.setIntParam(ITERLIMIT, new_iterlim)
+        self.soplex.setBasis(self.row_basis, self.col_basis)
         with nogil:
             result = self.soplex.solve()
             self.soplex.setIntParam(ITERLIMIT, iterlim)  # reset iterlim
+        PyErr_CheckSignals()
         if self.verbose():
             print(self.soplex.statisticString())
 
         # if it didn't solve with the set basis, try again
-        if result == ABORT_ITER or result == ABORT_TIME:  # silly SoPlex bug
-            self.reset_basis = True
-            with nogil:
+        with nogil:
+            if is_status_error(result):
+                self.reset_basis = True
                 self.soplex.clearBasis()
-                self.soplex.solve()
-            if self.verbose():
-                print("reset basis")
-                print(self.soplex.statisticString())
-        else:
-            self.reset_basis = False
-            if self.verbose():
-                print(self.soplex.statisticString())
+                result = self.soplex.solve()
+        if self.verbose():
+            print(self.soplex.statisticString())
 
         # save the basis for next time
         if result == OPTIMAL:
@@ -262,14 +275,10 @@ cdef class Soplex:
             return "optimal"
         elif status == INFEASIBLE:
             return "infeasible"
-        elif status == UNBOUNDED:
-            return "unbounded"
-        elif status == ABORT_VALUE:
-            return "abort_value"
-        else:  # this includes the status INForUNBD
-            # maybe print an error to turn off presolve
-            # if INForUNBD is the result
-            return "failed"
+        else:
+            mapping = get_status_mapping()
+            status_str = mapping.get(status)
+            return status_str if status_str is not None else "failed"
 
     cpdef get_objective_value(self, rational=False):
         if rational:
@@ -308,6 +317,12 @@ cdef class Soplex:
         return solution
 
     cpdef clear_basis(self):
+        IF False:
+            for i in range(self.soplex.numRowsReal()):
+                self.row_basis[i] = ON_UPPER
+            for i in range(self.soplex.numColsReal()):
+                self.col_basis[i] = ON_UPPER
+            self.soplex.setBasis(self.row_basis, self.col_basis)
         self.soplex.clearBasis()
 
     @property

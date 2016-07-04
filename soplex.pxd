@@ -78,6 +78,7 @@ cdef extern from "soplex.h" namespace "soplex":
         char * getScalerName()
         char * getPricerName()
         char * getRatioTesterName()
+        bool areLPsInSync()
         
         # Settings functions
         bool boolParam(BoolParam param)
@@ -93,14 +94,14 @@ cdef extern from "soplex.h" namespace "soplex":
         # Basis functions
         bool hasBasis()
         SPxBasis__SPxStatus basisStatus() 
-        void getBasis(VarStatus[], VarStatus[])
-        void setBasis(VarStatus[], VarStatus[])
+        void getBasis(VarStatus[], VarStatus[]) nogil
+        void setBasis(VarStatus[], VarStatus[]) nogil
         void clearBasis() nogil
         
         # Real functions
-        int numRowsReal()
-        int numColsReal()
-        int numNonzerosReal()
+        int numRowsReal() nogil
+        int numColsReal() nogil
+        int numNonzerosReal() nogil
         void addColReal(LPColReal)
         void addRowReal(LPRowReal)
         Real objValueReal()
@@ -122,9 +123,9 @@ cdef extern from "soplex.h" namespace "soplex":
         void writeStateReal(char *, NameSet *rowNames, NameSet *colNames, bool cpxFormat)
 
         # Rational functions
-        int numRowsRational()
-        int numColsRational()
-        int numNonzerosRational()
+        int numRowsRational() nogil
+        int numColsRational() nogil
+        int numNonzerosRational() nogil
         void addColRational(LPColRational)
         void addRowRational(LPRowRational)
         Rational objValueRational()
@@ -255,7 +256,7 @@ cdef extern from "nameset.h" namespace "soplex":
 
 cdef extern from "spxsolver.h" namespace "soplex":
     cdef cppclass SPxSolver
-    ctypedef enum VarStatus "soplex::SPxSolver::VarStatus":
+    cpdef enum VarStatus "soplex::SPxSolver::VarStatus":
         ON_UPPER "soplex::SPxSolver::ON_UPPER"
         ON_LOWER "soplex::SPxSolver::ON_LOWER"
         FIXED "soplex::SPxSolver::FIXED"
