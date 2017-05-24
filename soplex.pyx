@@ -27,7 +27,7 @@ cdef Rational rationalize(number):
     cdef Rational r
     if isinstance(number, (int, Number, Decimal, Fraction)):
         r = Rational()
-        r.readString(str(number))
+        r.readString(str(number).encode())
         return r
     elif isinstance(number, Basic):
         # TODO handle better
@@ -35,6 +35,7 @@ cdef Rational rationalize(number):
     else:
         r = Rational()
         s = "%15g" % number
+        s = s.encode()
         r.readString(s.strip())
         return r
 
@@ -335,7 +336,7 @@ cdef class Soplex:
 
     cpdef write(self, filename, state=True, rational=False):
         if state:
-            if filename.endswith(".lp"):
+            if filename.endswith(b".lp"):
                 filename = filename[:-3]
             if rational:
                 self.soplex.writeStateRational(filename, NULL, NULL, True)
