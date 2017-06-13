@@ -48,6 +48,7 @@ cdef bool is_status_error(STATUS status) nogil:
 cdef rational_to_frac(Rational rational):
     return Fraction(rationalToString(rational))
 
+
 cdef class Soplex:
     """cobra SoPlex solver object"""
     # Because we use the default constructor for soplex,
@@ -128,7 +129,6 @@ cdef class Soplex:
                 self.col_basis[i] = ON_UPPER
             self.soplex.getBasis(self.row_basis, self.col_basis)
 
- 
     @classmethod
     def create_problem(cls, cobra_model, objective_sense="maximize"):
         problem = cls(cobra_model)
@@ -179,7 +179,7 @@ cdef class Soplex:
             else:
                 self.soplex.setIntParam(VERBOSITY, value)
         elif name_upper == "SOLVEMODE":
-            self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_VALUES[value.upper()]) 
+            self.soplex.setIntParam(SOLVEMODE, SOLVEMODE_VALUES[value.upper()])
         elif name_upper == "CHECKMODE":
             self.soplex.setIntParam(CHECKMODE, CHECKMODE_VALUES[value.upper()])
         elif name_upper == "FACTOR_UPDATE_MAX":
@@ -238,7 +238,7 @@ cdef class Soplex:
             self.set_objective_sense(kwargs.pop("objective_sense"))
         for key, value in kwargs.items():
             self.set_parameter(key, value)
-        
+
         # try to solve with a set basis
         self.reset_basis = False
         cdef int iterlim = self.soplex.intParam(ITERLIMIT)
@@ -365,6 +365,7 @@ cdef class Soplex:
     def numIterations(self):
         return self.soplex.numIterations()
 
+
 # wrappers for all the functions at the module level
 create_problem = Soplex.create_problem
 def set_objective_sense(lp, objective_sense="maximize"):
@@ -388,3 +389,6 @@ cpdef get_objective_value(lp):
 cpdef format_solution(lp, cobra_model):
     return lp.format_solution(cobra_model)
 solve = Soplex.solve
+cpdef readLP(filename):
+    cdef SoPlex soplex
+    return soplex.readFile(filename, NULL, NULL)

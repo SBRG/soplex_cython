@@ -79,7 +79,7 @@ cdef extern from "soplex.h" namespace "soplex":
         char * getPricerName()
         char * getRatioTesterName()
         bool areLPsInSync()
-        
+
         # Settings functions
         bool boolParam(BoolParam param)
         int intParam(IntParam param)
@@ -93,11 +93,11 @@ cdef extern from "soplex.h" namespace "soplex":
 
         # Basis functions
         bool hasBasis()
-        SPxBasis__SPxStatus basisStatus() 
+        SPxBasis__SPxStatus basisStatus()
         void getBasis(VarStatus[], VarStatus[]) nogil
         void setBasis(VarStatus[], VarStatus[]) nogil
         void clearBasis() nogil
-        
+
         # Real functions
         int numRowsReal() nogil
         int numColsReal() nogil
@@ -145,6 +145,8 @@ cdef extern from "soplex.h" namespace "soplex":
         void writeStateRational(char *, NameSet *rowNames, NameSet *colNames)
         void writeStateRational(char *, NameSet *rowNames, NameSet *colNames, bool cpxFormat)
 
+        # Function to read LP file
+        bool readFile(char *, NameSet *rowNames, NameSet *colNames)
     ctypedef enum RowType "soplex::LPRow::Type":
         LESS_EQUAL "soplex::LPRow::LESS_EQUAL"
         EQUAL "soplex::LPRow::EQUAL"
