@@ -1,38 +1,29 @@
 soplex_cython
 =============
 
-Cython bindings to SoPlex 3. Build soplex first using the following instructions, then this extension.
+Cython bindings to SoPlex 3.0.1
 
-# Compile soplex and install soplex_cython
+# Installation
 
-## Part 1: Build SoPlex 
-
-1. [Download](http://soplex.zib.de/#download) and unzip the SoPlex source code.
+1. [Download](http://soplex.zib.de/#download) the **SoPlex 3.0.1** source code and unzip it into [soplex_cython root].
 2. Install gmp.
    - mac: ```brew install gmp```
    - Ubuntu: ```sudo apt-get install libgmp-dev```
-3. Apply patch to allow for compiling with long double precision
-   - ```cd [soplex root]/src```
-   - ```patch -b < [soplex_cython root]/long-double.patch```
-   - ```cd ..```
-4. Compile soplex
-   - run ```export USRCPPFLAGS=" -DWITH_LONG_DOUBLE "```
+   - Windows: Install MPIR (GMP replacement, which compiles with Visual Studio)
+3. Compile soplex
+   - ```cd [soplex_cython root]/[soplex root]```
+   - ```export USRCPPFLAGS=" -DWITH_LONG_DOUBLE "```
    - ```make SHARED=true GMP=true ZLIB=false VERBOSE=true```
    - This may fail to link, which is fine.
-5. Compile a library for static linking (libsoplex.a)
-   - On a mac first run ```rm obj/*/lib/gzstream.o``` 
-   - Run ```ar crs libsoplex.a obj/*/lib/*```
 
-## Part 2: Build soplex_cython
+4. Compile and install soplex_cython
+   - ```cd [soplex_cython root]```
+   - Mac/Linux: ```pip install .```
 
-1. Copy libsoplex.a from the previous build step to the soplex_cython directory.
-2. Edit setup.py so include_dirs points to the src folder of soplex.
-3. Run ```./build.sh``` which will build the extension
-4. Use ```setup.py install``` to install just like any other python package.
 
 ## Requirements
 1. A recent version of Cython. Can be installed with ```pip install cython```
-2. Python versions >= 2.7
+2. Python versions >= 2.7 (>= 3.5 for Windows builds)
 
 ## Common errors
 1. **```undefined symbol: _ZN6soplex6SoPlex13changeRhsRealEiRKe``` when running ```build.sh```**

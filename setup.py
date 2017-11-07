@@ -1,19 +1,18 @@
-from setuptools import setup, msvc
-from sys import platform, argv, version_info
+from setuptools import setup
+from sys import platform, argv
 
 from Cython.Distutils import build_ext, Extension
 from Cython.Build import cythonize
 from glob import glob
-import tarfile
 import shutil
 import struct
 import os.path as path
 
 
 # files that should not be compiled
-soplex_ver = "3.0.0"
+soplex_ver = "3.0.1"
 soplex_src = ["soplex/src"]
-omit = ["example.cpp", "soplexmain.cpp", "testsoplex.cpp"]
+omit = ["cycletimer.cpp", "example.cpp", "soplexmain.cpp", "testsoplex.cpp"]
 bitness = struct.calcsize("P") * 8
 
 # default build options for Linux
@@ -31,10 +30,9 @@ def soplex_sources(soplex_dir="soplex"):
 
 
 def extract_soplex():
-    soplex_file = "soplex-" + soplex_ver + ".tgz"
-    with tarfile.open(soplex_file, "r:gz") as tgz_file:
-        tgz_file.extractall()
-        shutil.move("soplex-" + soplex_ver, "soplex")
+    if path.exists('soplex'):
+        shutil.rmtree('soplex')
+    shutil.copytree("soplex-" + soplex_ver, "soplex")
 
 
 def prepare_mpir():
@@ -65,8 +63,8 @@ if platform == "darwin":
 elif platform == "win32":
     include_dirs.append(".\\lib\\mpir")
     # those are super obvious... not :(
-    extra_compile_args = ["-DSOPLEX_WITH_GMP", "/MT", "/EHsc", "-Ox", "-Oi", 
-                          "-GR", "-fp:precise", "-D_CRT_SECURE_NO_WARNINGS", 
+    extra_compile_args = ["-DSOPLEX_WITH_GMP", "/MT", "/EHsc", "-Ox", "-Oi",
+                          "-GR", "-fp:precise", "-D_CRT_SECURE_NO_WARNINGS",
                           "-DNDEBUG", "-wd4274", "-DWITH_LONG_DOUBLE"]
     prepare_mpir()
 
