@@ -1,11 +1,11 @@
 soplex_cython
 =============
 
-Cython bindings to SoPlex 3.0.1
+Cython bindings to SoPlex 3.1.1
 
 # Installation
 
-1. [Download](http://soplex.zib.de/#download) the **SoPlex 3.0.1** source code and unzip it into [soplex_cython root].
+1. [Download](http://soplex.zib.de/#download) the **SoPlex 3.1.1** source code and unzip it into [soplex_cython root].
 2. Install gmp.
    - mac: ```brew install gmp```
    - Ubuntu: ```sudo apt-get install libgmp-dev```

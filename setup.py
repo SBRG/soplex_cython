@@ -10,7 +10,7 @@ import os.path as path
 
 
 # files that should not be compiled
-soplex_ver = "3.0.1"
+soplex_ver = "3.1.1"
 soplex_src = ["soplex/src"]
 omit = ["cycletimer.cpp", "example.cpp", "soplexmain.cpp", "testsoplex.cpp"]
 bitness = struct.calcsize("P") * 8

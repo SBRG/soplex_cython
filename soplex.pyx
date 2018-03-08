@@ -33,11 +33,7 @@ cdef Rational rationalize(number):
         # TODO handle better
         return Rational(0)
     else:
-        r = Rational()
-        s = "%15g" % number
-        s = s.encode()
-        r.readString(s.strip())
-        return r
+        return Rational(float(number))
 
 cdef bool is_status_error(STATUS status) nogil:
     if status == OPTIMAL or status == INFEASIBLE or status == UNBOUNDED:
