@@ -4,6 +4,7 @@ from sys import platform, argv
 from Cython.Distutils import build_ext, Extension
 from Cython.Build import cythonize
 from glob import glob
+import tarfile
 import shutil
 import struct
 import os.path as path
@@ -30,9 +31,11 @@ def soplex_sources(soplex_dir="soplex"):
 
 
 def extract_soplex():
-    if path.exists('soplex'):
-        shutil.rmtree('soplex')
-    shutil.copytree("soplex-" + soplex_ver, "soplex")
+    soplex_file = "soplex-" + soplex_ver + ".tgz"
+
+    with tarfile.open(soplex_file, "r:gz") as tgz_file:
+        tgz_file.extractall()
+        shutil.move("soplex-" + soplex_ver, "soplex")
 
 
 def prepare_mpir():
