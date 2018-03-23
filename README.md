@@ -17,7 +17,7 @@ Cython bindings to SoPlex 3.1.1
 
 ## Requirements
 1. A recent version of Cython. Can be installed with ```pip install cython```
-2. Python versions >= 2.7 (>= 3.5 for Windows builds)
+2. Python versions: >= 3.5, 2.7 (>= 3.5 for windows)
 
 ## Common errors
 1. **```undefined symbol: _ZN6soplex6SoPlex13changeRhsRealEiRKe``` when running ```build.sh```**
