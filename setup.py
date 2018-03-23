@@ -84,5 +84,5 @@ setup(
     name="soplex",
     cmdclass={"build_ext": build_ext},
     ext_modules=ext_modules,
-    version="0.0.5"
+    version="0.0.7"
 )
